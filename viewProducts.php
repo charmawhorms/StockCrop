@@ -43,6 +43,7 @@ $result = mysqli_stmt_get_result($stmt);
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Products | StockCrop</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/icon.png">
 <style>
 body { display: flex; min-height: 100vh; }
 .sidebar { width: 220px; background-color: #198754; color: white; flex-shrink: 0; display: flex; flex-direction: column; padding-top: 20px; }

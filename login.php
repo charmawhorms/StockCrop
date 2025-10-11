@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>IslandEscape Jamaica | Login</title>
+        <title>StockCrop | Login</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="styles.css">
-
+        <link rel="icon" type="image/png" href="assets/icon.png">
         
         <!--SweetAlert2-->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-        <meta name="author" content="Charma Whorms">
-        <!--I CERTIFY THAT I HAVE NOT GIVEN OR RECEIVED ANY UNAUTHORIZED ASSISTANCE ON THIS 
-        ASSIGNMENT -C.Whorms-->
-        
-
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>     
     </head>
     <body>
         <?php
