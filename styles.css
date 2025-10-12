@@ -1,4 +1,3 @@
-/* Reset */
 * {
     margin: 0;
     padding: 0;
@@ -15,14 +14,14 @@
     color: white;
     overflow: hidden;
     display: flex;
-    align-items: center; /* vertically center the container */
-    min-height: 600px; /* ensures hero is tall enough */
+    align-items: center;
+    min-height: 600px;
 }
 
 .hero-container {
     display: flex;
     justify-content: space-between;
-    align-items: center; /* center all content vertically */
+    align-items: center;
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
@@ -72,11 +71,11 @@
 
 /* Hero Image Wrapper */
 .hero-image {
-    position: relative; /* no absolute positioning */
+    position: relative;
     width: 50%;
     display: flex;
     justify-content: flex-end;
-    align-items: flex-end; /* push image to bottom */
+    align-items: flex-end;
 }
 
 .hero-image img {
@@ -162,4 +161,18 @@
     }
 }
 
+.register-image {
+    flex: 1;
+    min-width: 350px;
+    background: url('https://images.unsplash.com/photo-1574516766468-192518e93237?auto=format&fit=crop&w=700&q=80') no-repeat center center;
+    background-size: cover;
+    height: 100%; 
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
 
+.register-container {
+    height: 700px;
+    max-width: 950px;
+}

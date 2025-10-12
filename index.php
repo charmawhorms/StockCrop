@@ -15,20 +15,20 @@
         ?>
         
         <section class="hero-section">
-        <div class="container hero-container">
-            <div class="hero-text">
-                <h1>Fresh From Jamaican Farms, <span>Delivered to Your Door</span></h1>
-                <p>StockCrop connects verified local farmers with consumers, making farm-to-table easier, fresher, and more reliable</p>
-                <a href="shop.php" class="btn-shop d-inline-flex align-items-center">Shop Now 
-                    <span class="material-symbols-outlined ms-2">arrow_forward</span>
-                </a>
+            <div class="container hero-container">
+                <div class="hero-text">
+                    <h1>Fresh From Jamaican Farms, <span>Delivered to Your Door</span></h1>
+                    <p>StockCrop connects verified local farmers with consumers, making farm-to-table easier, fresher, and more reliable</p>
+                    <a href="shop.php" class="btn-shop d-inline-flex align-items-center mt-3">Shop Now 
+                        <span class="material-symbols-outlined ms-2">arrow_forward</span>
+                    </a>
+                </div>
+                <div class="hero-image">
+                    <div class="hero-circle"></div>
+                    <img src="assets/man-holding-vegetables.png" alt="Farmer holding vegetables">
+                </div>
             </div>
-            <div class="hero-image">
-                <div class="hero-circle"></div>
-                <img src="assets/man-holding-vegetables.png" alt="Farmer holding vegetables">
-            </div>
-        </div>
-</section>
+        </section>
 
 
 

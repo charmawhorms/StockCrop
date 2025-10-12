@@ -1,9 +1,3 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-?> 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="icon" type="image/png" href="assets/icon.png">
     
     <style>
-        /* ✅ Navbar Link Hover (Green: #028037) */
+        /* Navbar Link Hover (Green: #028037) */
         .nav-link {
             color: #212529;
             transition: color 0.3s ease;
@@ -26,7 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
             color: #028037 !important;
         }
 
-        /* ✅ Sign Up Button Hover (Darker Red) */
+        /* Sign Up Button Hover (Darker Red) */
         .btn-signup {
             background-color: #E57373;
             color: white;
@@ -40,18 +34,19 @@ if (session_status() === PHP_SESSION_NONE) {
             color: white !important;
         }
 
-        /* ✅ Log In Button Hover (Darker Orange) */
+        /* Log In Button Hover (Darker Orange) */
         .btn-login {
             background-color: #F4A261;
             transition: background-color 0.3s ease;
             color: white;
         }
+
         .btn-login:hover {
             background-color: #E76F51;
             color: white;
         }
 
-        /* ✅ Responsive Fix for Small Screens */
+        /* Responsive Fix for Small Screens */
         @media (max-width: 992px) {
             .search-bar {
                 margin-top: 10px;
@@ -67,7 +62,6 @@ if (session_status() === PHP_SESSION_NONE) {
 <body>
     <nav class="navbar navbar-expand-lg bg-white shadow-sm py-2 sticky-top">
         <div class="container">
-
             <!-- Logo -->
             <a class="navbar-brand d-flex align-items-center" href="index.php">
                 <img src="assets/logo.png" alt="StockCrop Logo" height="45" class="me-2">
@@ -81,7 +75,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
             <!-- Collapsible content -->
             <div class="collapse navbar-collapse justify-content-between align-items-center" id="navbarNavDropdown">
-
                 <!-- Nav Links -->
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 d-flex align-items-center gap-lg-3 text-center">
                     <li class="nav-item"><a href="index.php" class="nav-link fw-semibold">Home</a></li>
@@ -100,7 +93,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
                 <!-- Action Buttons -->
                 <div class="d-flex align-items-center ms-lg-3 gap-2 mt-2 mt-lg-0">
-
                     <!-- Cart -->
                     <a href="cart.php" 
                        class="d-flex justify-content-center align-items-center position-relative flex-shrink-0"
