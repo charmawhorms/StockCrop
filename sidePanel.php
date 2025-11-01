@@ -13,17 +13,18 @@
 
     // Try to fetch farmer info if not already set
     if (!isset($farm_info)) {
-        $userId = $_SESSION['id'];
-        $stmt = mysqli_prepare($conn, "SELECT firstName, lastName FROM farmers WHERE userId = ?");
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        if ($result && mysqli_num_rows($result) > 0) {
-            $farm_info = mysqli_fetch_assoc($result);
-        } else {
-            $farm_info = ['firstName' => 'Farmer', 'lastName' => ''];
-        }
+    $userId = $_SESSION['id'];
+    $stmt = mysqli_prepare($conn, "SELECT firstName, lastName FROM farmers WHERE userId = ?");
+    mysqli_stmt_bind_param($stmt, "i", $userId);
+    mysqli_stmt_execute($stmt);
+    $farmResult = mysqli_stmt_get_result($stmt); // <-- rename
+    if ($farmResult && mysqli_num_rows($farmResult) > 0) {
+        $farm_info = mysqli_fetch_assoc($farmResult);
+    } else {
+        $farm_info = ['firstName' => 'Farmer', 'lastName' => ''];
     }
+}
+
 ?>
 
 <style>

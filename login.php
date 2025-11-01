@@ -1,49 +1,78 @@
 <?php
-    session_start();
-    include 'config.php';
-    include 'session.php';
+session_start();
 
-    redirectIfLoggedIn();
+// NOTE: Ensure 'config.php' establishes the $conn variable (mysqli connection)
+include 'config.php';
+// NOTE: Ensure 'session.php' includes the redirectIfLoggedIn() function
+include 'session.php'; 
 
-    // Initialize error message to avoid undefined variable warning
-    $errorMessage = '';
+// --- Redirection Logic ---
+// Get the redirect URL from the query string (e.g., login.php?redirect=checkout.php).
+// If no redirect is specified, default to 'customerHome.php'.
+$redirect_url = htmlspecialchars($_GET['redirect'] ?? 'customerHome.php');
 
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
-        $email = trim($_POST["email"]);
-        $password = $_POST["password"];
+// If the user is already logged in, redirect them away from the login page.
+redirectIfLoggedIn();
 
-        // Query to find user by email
-        $query = mysqli_prepare($conn, "SELECT id, roleId, password_hash FROM users WHERE email = ?");
-        mysqli_stmt_bind_param($query, "s", $email);
-        mysqli_stmt_execute($query);
-        $result = mysqli_stmt_get_result($query);
+// Initialize error message to avoid undefined variable warning
+$errorMessage = '';
 
-        if ($result && mysqli_num_rows($result) > 0) {
-            $user = mysqli_fetch_assoc($result);
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
+    $email = trim($_POST["email"]);
+    $password = $_POST["password"];
 
-            // Verify password
-            if (password_verify($password, $user["password_hash"])) {
-                session_regenerate_id(true); // Prevent session fixation
-                $_SESSION["id"] = $user["id"];
-                $_SESSION["roleId"] = $user["roleId"];
+    // 1. Query to find user by email using a prepared statement (security)
+    $query = mysqli_prepare($conn, "SELECT id, roleId, password_hash FROM users WHERE email = ?");
+    mysqli_stmt_bind_param($query, "s", $email);
+    mysqli_stmt_execute($query);
+    $result = mysqli_stmt_get_result($query);
 
-                // Redirect based on role
-                if ($user["roleId"] == 2) {
-                    header("Location: farmerDashboard.php");
-                    exit();
-                } elseif ($user["roleId"] == 1) {
-                    header("Location: customerHome.php");
-                    exit();
-                } else {
-                    $errorMessage = "Invalid account role. Please contact support.";
+    if ($result && mysqli_num_rows($result) > 0) {
+        $user = mysqli_fetch_assoc($result);
+
+        // 2. Verify password against the stored hash
+        if (password_verify($password, $user["password_hash"])) {
+            session_regenerate_id(true); // Prevent session fixation
+
+            // Set core session variables
+            $_SESSION["id"] = $user["id"];
+            $_SESSION["roleId"] = $user["roleId"];
+
+            // 3. Redirect based on role
+            if ($user["roleId"] == 2) {
+                // Farmer login always goes to the dashboard
+                header("Location: farmerDashboard.php");
+                exit();
+            } elseif ($user["roleId"] == 3) { 
+                // CUSTOMER LOGIN FLOW
+
+                // Fetch Customer data (firstName) for the session
+                $customer_query = mysqli_prepare($conn, "SELECT firstName FROM customers WHERE userId = ?");
+                mysqli_stmt_bind_param($customer_query, "i", $user["id"]);
+                mysqli_stmt_execute($customer_query);
+                $customer_result = mysqli_stmt_get_result($customer_query);
+                
+                if ($customer_row = mysqli_fetch_assoc($customer_result)) {
+                    $_SESSION['firstName'] = $customer_row['firstName'];
                 }
+                mysqli_stmt_close($customer_query);
+
+                // Redirect to the originally requested page ($redirect_url)
+                header("Location: " . $redirect_url);
+                exit();
+
             } else {
-                $errorMessage = "Invalid login credentials. Please try again.";
+                $errorMessage = "Invalid account role. Please contact support.";
             }
         } else {
-            $errorMessage = "Invalid email or password.";
+            $errorMessage = "Invalid login credentials. Please try again.";
         }
+    } else {
+        $errorMessage = "Invalid email or password.";
     }
+    // Clean up statement for the primary query
+    mysqli_stmt_close($query);
+}
 ?>
 
 <!DOCTYPE html>
@@ -52,7 +81,6 @@
     <meta charset="UTF-8">
     <title>StockCrop | Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="assets/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -142,7 +170,6 @@
     </style>
 </head>
 <body>
-    <!-- Minimal navbar -->
     <nav class="navbar navbar-expand-lg py-2 sticky-top">
         <div class="container d-flex align-items-center">
             <div class="d-flex align-items-center me-auto">
@@ -154,7 +181,6 @@
         </div>
     </nav>
 
-    <!-- Login Section -->
     <section class="login-hero">
         <div class="login-overlay"></div>
         <div class="login-card">
@@ -167,7 +193,7 @@
                 </div>
             <?php endif; ?>
 
-            <form action="login.php" method="POST">
+            <form action="login.php?redirect=<?= urlencode($redirect_url) ?>" method="POST">
                 <div class="mb-3">
                     <label for="email" class="form-label fw-semibold">Email</label>
                     <input type="email" name="email" id="email" class="form-control" required placeholder="you@example.com">
@@ -185,7 +211,7 @@
                 <p class="text-center mb-0">
                     Don't have an account? <br>
                     <a href="registerFarmer.php">Register as a Farmer</a> | 
-                    <a href="registerCustomer.php">Register as a Customer</a>
+                    <a href="registerCustomer.php?redirect=<?= urlencode($redirect_url) ?>">Register as a Customer</a>
                 </p>
             </form>
         </div>
