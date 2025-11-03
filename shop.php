@@ -155,7 +155,7 @@ mysqli_stmt_close($stmt);
                         <?php foreach ($products as $product): ?>
                         <div class="col-md-4 col-sm-6">
                             <div class="card product-card h-100 text-center shadow-sm">
-                                <img src="<?= $product['imagePath'] ?>" class="card-img-top" style="height:200px; object-fit:cover;" alt="<?= $product['productName'] ?>">
+                                <img src="<?= $product['imagePath'] ?>" loading="lazy" class="card-img-top" style="height:200px; object-fit:cover;" alt="<?= $product['productName'] ?>">
                                 <div class="card-body d-flex flex-column justify-content-between"><div>
                                 <h6 class="card-title mb-1"><?= $product['productName'] ?></h6>
                                 <p class="text-success fw-bold mb-1">$<?= number_format($product['price'], 2) ?> / <?= $product['unitOfSale'] ?></p>
@@ -194,6 +194,6 @@ mysqli_stmt_close($stmt);
     <?php include 'footer.php'; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="shop.js"></script> <!-- Optional: keep addToCart() JS here -->
+    <!--<script src="shop.js"></script>  Optional: keep addToCart() JS here -->
 </body>
 </html>

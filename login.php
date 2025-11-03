@@ -9,7 +9,7 @@ include 'session.php';
 // --- Redirection Logic ---
 // Get the redirect URL from the query string (e.g., login.php?redirect=checkout.php).
 // If no redirect is specified, default to 'customerHome.php'.
-$redirect_url = htmlspecialchars($_GET['redirect'] ?? 'customerHome.php');
+$redirect_url = htmlspecialchars($_GET['redirect'] ?? 'customerDashboard.php');
 
 // If the user is already logged in, redirect them away from the login page.
 redirectIfLoggedIn();
@@ -38,6 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
             $_SESSION["id"] = $user["id"];
             $_SESSION["roleId"] = $user["roleId"];
 
+
             // 3. Redirect based on role
             if ($user["roleId"] == 2) {
                 // Farmer login always goes to the dashboard
@@ -47,13 +48,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
                 // CUSTOMER LOGIN FLOW
 
                 // Fetch Customer data (firstName) for the session
-                $customer_query = mysqli_prepare($conn, "SELECT firstName FROM customers WHERE userId = ?");
+                $customer_query = mysqli_prepare($conn, "SELECT firstName, lastName, address1, address2, parish FROM customers WHERE userId = ?");
                 mysqli_stmt_bind_param($customer_query, "i", $user["id"]);
                 mysqli_stmt_execute($customer_query);
                 $customer_result = mysqli_stmt_get_result($customer_query);
                 
                 if ($customer_row = mysqli_fetch_assoc($customer_result)) {
                     $_SESSION['firstName'] = $customer_row['firstName'];
+                    $_SESSION['lastName']  = $customer_row['lastName'];
+                    $_SESSION['address1']  = $customer_row['address1'];
+                    $_SESSION['address2']  = $customer_row['address2'];
+                    $_SESSION['parish']  = $customer_row['parish'];
                 }
                 mysqli_stmt_close($customer_query);
 

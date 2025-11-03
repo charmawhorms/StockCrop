@@ -96,8 +96,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 <li><a class="dropdown-item" href="farmerDashboard.php">Dashboard</a></li>
                             <?php elseif ($user_role_id == 3): ?>
                                 <li><a class="dropdown-item" href="customerDashboard.php">My Dashboard</a></li>
-                                <li><a class="dropdown-item" href="customerProfile.php">My Profile</a></li>
-                                <li><a class="dropdown-item" href="customerOrders.php">My Orders</a></li>
+                                <li><a class="dropdown-item" href="customerDashboard.php#profile">My Profile</a></li>
+                                <li><a class="dropdown-item" href="customerDashboard.php#orders">My Orders</a></li>
+                                <li><a class="dropdown-item" href="customerDashboard.php#wishlist">My Wishlist</a></li>
                             <?php endif; ?>
                             <li><a class="dropdown-item" href="logout.php">Log Out</a></li>
                         </ul>

@@ -138,7 +138,7 @@ $relatedResult = mysqli_query($conn, $relatedQuery);
                 <a href="productDetails.php?id=<?= $related['id'] ?>" class="text-decoration-none d-block">
                     <div class="card related-card h-100 border-0 shadow-sm">
                         <div class="related-img-wrap">
-                            <img src="<?= htmlspecialchars($related['imagePath']) ?>" alt="<?= htmlspecialchars($related['productName']) ?>" class="img-fluid">
+                            <img src="<?= htmlspecialchars($related['imagePath']) ?>" loading="lazy" alt="<?= htmlspecialchars($related['productName']) ?>" class="img-fluid">
                         </div>
                         <div class="card-body text-center">
                             <h6 class="fw-bold text-dark"><?= htmlspecialchars($related['productName']) ?></h6>

@@ -2,7 +2,7 @@
 session_start();
 include 'config.php';
 
-// --- 1. CORE AUTHENTICATION AND REDIRECTION LOGIC ---
+// --- 1. AUTHENTICATION AND CART CHECK ---
 $is_logged_in = isset($_SESSION['id']);
 $has_session_cart = isset($_SESSION['cart']) && !empty($_SESSION['cart']);
 $user_id = $_SESSION['id'] ?? null;
@@ -12,10 +12,10 @@ if (!$is_logged_in && !$has_session_cart) {
     exit();
 }
 
-// --- 2. HANDLE FORM SUBMISSION (ORDER PLACEMENT) ---
+// --- 2. HANDLE FORM SUBMISSION ---
 if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    // 2.1. INPUT SANITIZATION AND PREPARATION
+
+    // 2.1. Input sanitization
     $fullName = mysqli_real_escape_string($conn, $_POST['fullName'] ?? '');
     $phone = mysqli_real_escape_string($conn, $_POST['phone'] ?? '');
     $address = mysqli_real_escape_string($conn, $_POST['address'] ?? 'Customer Pickup'); 
@@ -23,19 +23,19 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $deliveryMethod = mysqli_real_escape_string($conn, $_POST['deliveryMethod'] ?? '');
     $shippingFee = floatval($_POST['shippingFee'] ?? 0.00);
 
-    // Basic Validation Check
     if (empty($fullName) || empty($phone) || empty($paymentMethod) || empty($deliveryMethod)) {
         $_SESSION['message'] = ['type' => 'danger', 'text' => 'Missing contact or payment details.'];
         header("Location: checkout.php");
         exit();
     }
+
     if ($deliveryMethod === 'Delivery' && $address === 'Customer Pickup') {
         $_SESSION['message'] = ['type' => 'danger', 'text' => 'A delivery address is required for doorstep delivery.'];
         header("Location: checkout.php");
         exit();
     }
 
-    // 2.2. RETRIEVE customerId (Primary Key from customers table)
+    // 2.2. Get customerId
     $sql_customer = "SELECT id FROM customers WHERE userId = ?";
     $stmt_customer = mysqli_prepare($conn, $sql_customer);
     mysqli_stmt_bind_param($stmt_customer, "i", $user_id);
@@ -51,15 +51,16 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $customerId = $customer_row['id'];
 
-
-    // 2.3. FETCH CART ITEMS, VERIFY PRICES/STOCK, AND CALCULATE TOTALS
+    // 2.3. Fetch cart items
     $cart_items = [];
     $order_subtotal = 0.0;
     $order_status = 'Pending'; 
 
-    $sql = "SELECT c.productId, c.quantity, p.price, p.stockQuantity, p.farmerId 
-            FROM cart c
-            JOIN products p ON c.productId = p.id
+    $sql = "SELECT ci.id AS cartItemId, ci.productId, ci.quantity, ci.price, 
+                   p.stockQuantity, p.farmerId, p.productName, p.imagePath
+            FROM cartItems ci
+            JOIN cart c ON ci.cartId = c.id
+            JOIN products p ON ci.productId = p.id
             WHERE c.userId = ?";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "i", $user_id);
@@ -78,7 +79,7 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: cart.php"); 
             exit();
         }
-        
+
         $line_total = $row['quantity'] * $row['price'];
         $order_subtotal += $line_total;
         $row['lineTotal'] = $line_total;
@@ -88,17 +89,15 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $order_total = $order_subtotal + $shippingFee;
 
-
-    // 2.4. START DATABASE TRANSACTION (Order Finalization)
+    // 2.4. Start transaction
     mysqli_begin_transaction($conn);
 
     try {
-        // A. INSERT INTO orders table
+        // Insert order
         $sql_order = "INSERT INTO orders (customerId, orderDate, totalAmount, shippingFee, deliveryMethod, deliveryAddress, recipientPhone, paymentMethod, status) 
-                      VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)"; 
+                      VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)";
         $stmt_order = mysqli_prepare($conn, $sql_order);
-        
-        mysqli_stmt_bind_param($stmt_order, "idddsssss", 
+        mysqli_stmt_bind_param($stmt_order, "idddssss", 
             $customerId, 
             $order_total, 
             $shippingFee, 
@@ -112,12 +111,11 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $order_id = mysqli_insert_id($conn);
         mysqli_stmt_close($stmt_order);
 
-        // B. INSERT INTO order_items table and UPDATE stock
+        // Insert order_items and update stock
         $sql_item = "INSERT INTO order_items (orderId, productId, farmerId, quantity, priceAtPurchase, lineTotal) VALUES (?, ?, ?, ?, ?, ?)";
         $sql_stock = "UPDATE products SET stockQuantity = stockQuantity - ? WHERE id = ?";
-        
+
         foreach ($cart_items as $item) {
-            // Insert order item
             $stmt_item = mysqli_prepare($conn, $sql_item);
             mysqli_stmt_bind_param($stmt_item, "iiiidd", 
                 $order_id, 
@@ -130,62 +128,79 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_execute($stmt_item);
             mysqli_stmt_close($stmt_item);
 
-            // Update product stock
             $stmt_stock = mysqli_prepare($conn, $sql_stock);
             mysqli_stmt_bind_param($stmt_stock, "ii", $item['quantity'], $item['productId']);
             mysqli_stmt_execute($stmt_stock);
             mysqli_stmt_close($stmt_stock);
         }
-        
-        // C. CLEAR THE USER'S CART
-        $sql_clear = "DELETE FROM cart WHERE userId = ?";
-        $stmt_clear = mysqli_prepare($conn, $sql_clear);
-        mysqli_stmt_bind_param($stmt_clear, "i", $user_id);
-        mysqli_stmt_execute($stmt_clear);
-        mysqli_stmt_close($stmt_clear);
-        
-        // D. COMMIT TRANSACTION
+
+        // Clear user's cartItems
+        $stmt_cart = mysqli_prepare($conn, "SELECT id FROM cart WHERE userId = ?");
+        mysqli_stmt_bind_param($stmt_cart, "i", $user_id);
+        mysqli_stmt_execute($stmt_cart);
+        $result_cart = mysqli_stmt_get_result($stmt_cart);
+        $cart_row = mysqli_fetch_assoc($result_cart);
+        mysqli_stmt_close($stmt_cart);
+
+        if ($cart_row) {
+            $cart_id = $cart_row['id'];
+            $stmt_clear = mysqli_prepare($conn, "DELETE FROM cartItems WHERE cartId = ?");
+            mysqli_stmt_bind_param($stmt_clear, "i", $cart_id);
+            mysqli_stmt_execute($stmt_clear);
+            mysqli_stmt_close($stmt_clear);
+        }
+
         mysqli_commit($conn);
 
-        // 2.5. REDIRECT TO ORDER SUCCESS PAGE
-        $_SESSION['message'] = ['type' => 'success', 'text' => "Order #{$order_id} placed successfully! Thank you for your purchase."];
+        $_SESSION['message'] = ['type' => 'success', 'text' => "Order #{$order_id} placed successfully!"];
         header("Location: orderConfirmation.php?orderId=" . $order_id);
         exit();
 
     } catch (Exception $e) {
-        // 2.6. ROLLBACK TRANSACTION AND HANDLE ERROR
         mysqli_rollback($conn);
         error_log("Order Placement Failed: " . $e->getMessage());
-        $_SESSION['message'] = ['type' => 'danger', 'text' => 'Order failed due to a server error. Please try again.'];
-        header("Location: checkout.php"); // Redirect back to the form
+        $_SESSION['message'] = ['type' => 'danger', 'text' => 'Order failed. Please try again.'];
+        header("Location: checkout.php");
         exit();
     }
-} 
-// --- END POST HANDLING ---
+}
 
-
-// --- 3. DISPLAY FORM LOGIC (GET REQUEST) ---
-
-// Fetch User Address and Contact Info for form pre-fill
+// --- 3. Display Form Logic (GET request) ---
 $customer_address = [
-    'fullName' => $_SESSION['firstName'] ?? '',
+    'fullName' => '',
     'phone' => '',
     'address' => ''
 ];
 
 if ($user_id) {
-    // Assuming phone and address1 are in the 'customers' table now, via a join or directly
-    // NOTE: This assumes 'customers' holds the full name too, but we use session for now.
-    $stmt = mysqli_prepare($conn, "SELECT c.phoneNumber, c.address1 FROM customers c WHERE c.userId = ?");
-    
+    $stmt = mysqli_prepare(
+        $conn, 
+        "SELECT firstName, lastName, phoneNumber, address1, address2, parish 
+         FROM customers 
+         WHERE userId = ?"
+    );
     if ($stmt) {
         mysqli_stmt_bind_param($stmt, "i", $user_id);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
+
         if ($row = mysqli_fetch_assoc($result)) {
-            $customer_address['phone'] = htmlspecialchars($row['phoneNumber'] ?? '');
-            $customer_address['address'] = htmlspecialchars($row['address1'] ?? '');
+            $customer_address['fullName'] = trim($row['firstName'] . ' ' . $row['lastName']);
+            $customer_address['phone'] = $row['phoneNumber'];
+            $customer_address['address'] = implode(', ', array_filter([$row['address1'], $row['address2'], $row['parish']]));
+
+            $_SESSION['firstName'] = $row['firstName'];
+            $_SESSION['lastName'] = $row['lastName'];
+            $_SESSION['phone'] = $row['phoneNumber'];
+            $_SESSION['address1'] = $row['address1'];
+            $_SESSION['address2'] = $row['address2'];
+            $_SESSION['parish'] = $row['parish'];
+        } else {
+            $customer_address['fullName'] = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? ''));
+            $customer_address['phone'] = $_SESSION['phone'] ?? '';
+            $customer_address['address'] = implode(', ', array_filter([$_SESSION['address1'] ?? '', $_SESSION['address2'] ?? '', $_SESSION['parish'] ?? '']));
         }
+
         mysqli_stmt_close($stmt);
     }
 }
@@ -252,7 +267,7 @@ if ($user_id) {
                                         Doorstep Delivery (Flat Rate)
                                     </label>
                                     <small class="d-block text-muted ms-4">
-                                        Farmer delivers to your address. **Cost: J$500.00**
+                                        **StockCrop Logistics Partner** delivers to your address. **Cost: J$500.00**
                                     </small>
                                 </div>
 
@@ -262,7 +277,7 @@ if ($user_id) {
                                         Customer Pickup
                                     </label>
                                     <small class="d-block text-muted ms-4">
-                                        Collect from the farmer's location. **Cost: Free**
+                                        Collect from the designated **StockCrop Sorting Hub. **Cost: Free**
                                     </small>
                                 </div>
                                 
@@ -276,7 +291,7 @@ if ($user_id) {
                                 <div id="addressFields">
                                     <div class="alert alert-info py-2" id="pickupMessage" style="display:block;">
                                         <span class="material-symbols-outlined align-middle me-2">storefront</span>
-                                        You will receive the Farmer's **Pickup Location** details upon order confirmation.
+                                        You will receive the **Pickup Location and Time Slot** upon order confirmation.
                                     </div>
 
                                     <div class="mb-3">
@@ -413,7 +428,7 @@ if ($user_id) {
             // Pickup selected - Hide address, remove requirement
             deliveryAddressContainer.style.display = 'none';
             addressInput.removeAttribute('required');
-            addressInput.value = 'Customer Pickup'; // Default value for form submission (important!)
+            //addressInput.value = 'Customer Pickup'; // Default value for form submission (important!)
             pickupMessage.style.display = 'block';
         }
 
