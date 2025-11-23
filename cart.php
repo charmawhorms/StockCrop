@@ -149,7 +149,7 @@ if ($isAjax) {
                         <span>Order Total</span>
                         <span id="cartTotal">$0.00</span>
                     </div>
-                    <a href="checkout.php" id="checkoutBtn" class="btn btn-success btn-lg w-100 mt-4 disabled">Proceed to Checkout</a>
+                    <a href="checkout.php" id="checkoutBtn" class="btn btn-success btn-lg w-100 mt-4">Proceed to Checkout</a>
                 </div>
             </div>
         </div>

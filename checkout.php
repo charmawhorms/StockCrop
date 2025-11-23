@@ -248,7 +248,7 @@ if ($user_id) {
                             </p>
                             
                             <a href="login.php?redirect=checkout.php" class="btn btn-primary me-2">Log In to Continue</a>
-                            <a href="login.php?redirect=<?php echo basename($_SERVER['PHP_SELF']); ?>" class="btn btn-outline-primary">Log In to Continue</a>
+                            <a href="registerCustomer.php?redirect=<?php echo basename($_SERVER['PHP_SELF']); ?>" class="btn btn-outline-primary">Register to Continue</a>
                         <?php endif; ?>
                     </div>
                 </div>
